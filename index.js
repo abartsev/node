@@ -1,10 +1,10 @@
 const fs = require('fs')
 const path = require('path')
 
-var count = 20,
+var count = 10,
 pathNew = ''
 const recursFn = (name) => {
-   
+
     pathNew = (!pathNew) ? name : pathNew + '/' + name
     if (!count) {
         return
@@ -33,8 +33,35 @@ const randFn = () => {
     }
 }
 
-const readFn = () => {
+const readFn = (base, level = 0) => { 
     
+    if (!fs.exists('./newDir')) {
+        fs.mkdir('./newDir', ()=>{});
+    }
+    
+    const files = fs.readdirSync(base);
+
+    files.forEach(item => {
+        let localBase = path.join(base, item);
+        let state = fs.stat(localBase);
+        if (state.isDirectory()) {
+            readFn(localBase, level + 1);
+        } else {
+            let newdir = path.join('newDir', item.slice(0, -(item.length-1)))
+
+            if (!fs.exists(newdir)) {
+                fs.mkdir(newdir,()=>{});
+            }
+
+            fs.link(localBase, `${newdir}/${item}`, (err)=>{
+                if (err) {
+                    console.log('err',err); 
+                    return;       
+                }
+            })
+            fs.unlink(localBase)
+        }
+    })
 }
 recursFn('dir')
-readFn()
+readFn('./dir')
