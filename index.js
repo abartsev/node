@@ -35,34 +35,51 @@ const randFn = () => {
 
 const readFn = (base, level = 0) => { 
     
-    if (!fs.exists('./newDir')) {
-        fs.mkdir('./newDir', ()=>{})
-    }
+    fs.exists('./newDir', (exists) => {
+        if (!exists) {
+            fs.mkdir('./newDir', ()=>{})
+        }
+    })
     
     fs.readdir(base, (err, files) => {
+        if (!files.length && path.join(base) !== 'dir' ) {
+            fs.rmdir(base, (err) => {
+                if (!err) {
+                    readFn(path.join(base, '../'),)
+                }  
+            })
+            
+        }
         
         files.forEach(item => {
-            let localBase = path.join(base, item)
-            let state = fs.statSync(localBase)
             
-            if (state.isDirectory()) {
-                readFn(localBase, level + 1)
-            } else {
-                let newdir = path.join('newDir', item.slice(0, -(item.length-1)))
+            let localBase = path.join(base, item)
 
-                if (!fs.exists(newdir)) {
-                    fs.mkdir(newdir,()=>{})
+            fs.stat(localBase, (err, state) => {
+                if(err){
+                    return err
                 }
-                
-                fs.link(localBase, newdir+'/'+item, () => {
-                    console.log(level, ': ',base,' --> ',newdir)
-                    fs.unlink(localBase, ()=>{})
-                })
-                
-            }
+                if (state.isDirectory()) {
+                    readFn(localBase, level + 1)
+                } else {
+                    let newdir = path.join('newDir', item.slice(0, -(item.length-1)))
+
+                    fs.exists(newdir, (exists) => {
+                        if (!exists) {
+                            fs.mkdir(newdir, ()=>{})
+                        }
+                    })
+                    
+                    fs.link(localBase, newdir+'/'+item, () => {
+                        //console.log(level, ': ',base,' --> ',newdir)
+                        fs.unlink(localBase, ()=>{})
+                    })
+                    
+                }
+            })
         })
     })
 }
 
 recursFn('dir')
-readFn('./dir')
+readFn('dir')
