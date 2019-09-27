@@ -42,14 +42,17 @@ const readFn = (base, level = 0) => {
     })
     
     fs.readdir(base, (err, files) => {
-        if (!files.length && path.join(base) !== 'dir' ) {
-            fs.rmdir(base, (err) => {
-                if (!err) {
-                    readFn(path.join(base, '../'),)
-                }  
-            })
-            
+        if(err){
+            return err
         }
+        // if (!files.length && path.join(base) !== 'dir' ) {
+        //     fs.rmdir(base, (err) => {
+        //         if (!err) {
+        //             readFn(path.join(base, '../'),)
+        //         }  
+        //     })
+            
+        // }
         
         files.forEach(item => {
             
@@ -62,19 +65,32 @@ const readFn = (base, level = 0) => {
                 if (state.isDirectory()) {
                     readFn(localBase, level + 1)
                 } else {
-                    let newdir = path.join('newDir', item.slice(0, -(item.length-1)))
+                    let newdir = path.join('newDir', item.slice(0, -(item.length-1)).toUpperCase())
 
                     fs.exists(newdir, (exists) => {
                         if (!exists) {
-                            fs.mkdir(newdir, ()=>{})
+                            fs.mkdir(newdir, ()=>{
+                                fs.link(localBase, path.join(newdir, item), (err ) => {
+                                    if(!err){
+                                        console.log(level, ': ',base,' --> ',newdir)
+                                        fs.unlink(localBase, ()=>{})
+                                    } else {
+                                        console.log(err)
+                                    }
+                                })
+                            })
+                        } else {
+                            fs.link(localBase, path.join(newdir, item), (err ) => {
+                                if(!err){
+                                    console.log(level, ': ',base,' --> ',newdir)
+                                    fs.unlink(localBase, ()=>{})
+                                } else {
+                                    console.log(err)
+                                }
+                            })
                         }
                     })
-                    
-                    fs.link(localBase, newdir+'/'+item, () => {
-                        //console.log(level, ': ',base,' --> ',newdir)
-                        fs.unlink(localBase, ()=>{})
-                    })
-                    
+   
                 }
             })
         })
