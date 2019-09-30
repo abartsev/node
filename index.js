@@ -43,24 +43,24 @@ const readFn = (base, level = 0) => {
     
     fs.readdir(base, (err, files) => {
         if(err){
-            return err
+            console.log('readdir: ', err) 
         }
-        // if (!files.length && path.join(base) !== 'dir' ) {
-        //     fs.rmdir(base, (err) => {
-        //         if (!err) {
-        //             readFn(path.join(base, '../'),)
-        //         }  
-        //     })
-            
-        // }
+        if (!files.length && base.split(path.sep).length !== 0 ) {
+            console.log(base.split(path.sep))
+            fs.rmdir(base, (err) => {
+                if (!err) {
+                    readFn(path.join(base, '../'))
+                }  
+            })
+        }
         
         files.forEach(item => {
             
             let localBase = path.join(base, item)
 
             fs.stat(localBase, (err, state) => {
-                if(err){
-                    return err
+                if (err) {
+                   console.log('stat: ', err) 
                 }
                 if (state.isDirectory()) {
                     readFn(localBase, level + 1)
@@ -75,17 +75,17 @@ const readFn = (base, level = 0) => {
                                         console.log(level, ': ',base,' --> ',newdir)
                                         fs.unlink(localBase, ()=>{})
                                     } else {
-                                        console.log(err)
+                                        console.log('link1: ', err)
                                     }
                                 })
                             })
                         } else {
                             fs.link(localBase, path.join(newdir, item), (err ) => {
                                 if(!err){
-                                    console.log(level, ': ',base,' --> ',newdir)
+                                   // console.log(level, ': ',base,' --> ',newdir)
                                     fs.unlink(localBase, ()=>{})
                                 } else {
-                                    console.log(err)
+                                    console.log('link: ', err)
                                 }
                             })
                         }
