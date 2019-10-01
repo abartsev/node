@@ -1,101 +1,19 @@
-const fs = require('fs')
-const path = require('path')
+const http = require('http')
+const interval = 1000
+const period = 10000
+const date = new Date
+const dateTime = `${date.getFullYear()}/${date.getMonth()}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}`
 
-var count = 10,
-pathNew = ''
-const recursFn = (name) => {
-
-    pathNew = (!pathNew) ? name : pathNew + '/' + name
-    if (!count) {
-        return   
-    }
+const app = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    const setId = setInterval(()=>{ console.log(dateTime) }, interval)
+    setTimeout(() => { 
+        clearInterval(setId)
+        res.end(dateTime);
+    }, period)
     
-    fs.mkdir(pathNew, () => {})
+});
 
-    for (let index = 0; index < randFn().rand; index++) {
-        fs.writeFile(path.join(pathNew,randFn().name+'.png'), '3e3e', () => {})  
-    }
-
-    if (randFn().rand % 2 !== 0 && pathNew !== 'dir') {
-        pathNew = pathNew.split('/').slice(0,-1).join('/')  
-    }
-
-    count -= 1
-    recursFn(randFn().name)
-}
-
-const randFn = () => {
-    let rand = Math.floor(Math.random() * 6) + 1
-    let name = Math.random().toString(36).substring(5)
-    return {
-        rand,
-        name
-    }
-}
-
-const readFn = (base, level = 0) => { 
-    
-    fs.exists('./newDir', (exists) => {
-        if (!exists) {
-            fs.mkdir('./newDir', ()=>{})
-        }
-    })
-    
-    fs.readdir(base, (err, files) => {
-        if(err){
-            console.log('readdir: ', err) 
-        }
-        if (!files.length && base.split(path.sep).length !== 0 ) {
-            console.log(base.split(path.sep))
-            fs.rmdir(base, (err) => {
-                if (!err) {
-                    readFn(path.join(base, '../'))
-                }  
-            })
-        }
-        
-        files.forEach(item => {
-            
-            let localBase = path.join(base, item)
-
-            fs.stat(localBase, (err, state) => {
-                if (err) {
-                   console.log('stat: ', err) 
-                }
-                if (state.isDirectory()) {
-                    readFn(localBase, level + 1)
-                } else {
-                    let newdir = path.join('newDir', item.slice(0, -(item.length-1)).toUpperCase())
-
-                    fs.exists(newdir, (exists) => {
-                        if (!exists) {
-                            fs.mkdir(newdir, ()=>{
-                                fs.link(localBase, path.join(newdir, item), (err ) => {
-                                    if(!err){
-                                        console.log(level, ': ',base,' --> ',newdir)
-                                        fs.unlink(localBase, ()=>{})
-                                    } else {
-                                        console.log('link1: ', err)
-                                    }
-                                })
-                            })
-                        } else {
-                            fs.link(localBase, path.join(newdir, item), (err ) => {
-                                if(!err){
-                                   // console.log(level, ': ',base,' --> ',newdir)
-                                    fs.unlink(localBase, ()=>{})
-                                } else {
-                                    console.log('link: ', err)
-                                }
-                            })
-                        }
-                    })
-   
-                }
-            })
-        })
-    })
-}
-
-recursFn('dir')
-readFn('dir')
+app.listen('3002', function () {
+    console.log('listen port 3002')
+})
